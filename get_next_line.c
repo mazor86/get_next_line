@@ -6,7 +6,7 @@
 /*   By: mazor <mazor@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/19 03:42:25 by mazor             #+#    #+#             */
-/*   Updated: 2020/05/21 19:00:13 by mazor            ###   ########.fr       */
+/*   Updated: 2020/05/21 19:11:15 by mazor            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,8 +92,16 @@ int		get_next_line(int fd, char **line)
 
 int main(void)
 {
+	int get;
+	char **line;
 	int fd = open("test", O_RDWR);
-	while ()
-	
+	while ((get = get_next_line(fd, line)))
+	{
+		printf("%d\n", get);
+	}
+	printf("%d\n", get);
+	free(*line);
+	close(fd);
+	return (0);
 
 }
