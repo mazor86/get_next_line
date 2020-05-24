@@ -5,103 +5,99 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mazor <mazor@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/05/19 03:42:25 by mazor             #+#    #+#             */
-/*   Updated: 2020/05/21 19:11:15 by mazor            ###   ########.fr       */
+/*   Created: 2020/05/24 14:18:31 by mazor             #+#    #+#             */
+/*   Updated: 2020/05/24 21:16:01 by mazor            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
-
-void	*ft_memset(void *s, int c, size_t n)
+static int		free_mem(char **rem_ptr, char **buf_ptr)
 {
-	char	*ptr;
-
-	ptr = (char *)s;
-	while (n--)
+	if (*rem_ptr)
 	{
-		*(ptr++) = (unsigned char)c;
+		free(*rem_ptr);
+		*rem_ptr = NULL;
 	}
-	return (s);
+	if (*buf_ptr)
+	{
+		free(*buf_ptr);
+		*buf_ptr = NULL;
+	}
+	return (-1);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+static int		print_line(char **src, char **dest, char **buf_ptr)
 {
-	char			*joined;
-	unsigned int	len1;
-	unsigned int	len2;
-
-	if (s1 && s2)
-	{
-		len1 = ft_strlen(s1);
-		len2 = ft_strlen(s2);
-		if (!(joined = (char*)malloc(sizeof(char) * (len1 + len2 + 1))))
-			return (NULL);
-		ft_strlcpy(joined, s1, len1 + 1);
-		ft_strlcpy(joined + len1, s2, len2 + 1);
-		return (joined);
-	}
-	return (NULL);
+	if (!(*src))
+		return (free_mem(src, buf_ptr) + 1);
+	write(1, *src, ft_strlen(*src));
+	if (src == dest)
+		return ((int)write(1, "\n", 1));
+	*dest = ft_strdup(*src);
+	return (free_mem(src, buf_ptr) + 1);
 }
 
-int		get_next_line(int fd, char **line)
+static int		nl_search(char **rem_ptr, char **line)
 {
-	char		buf[BUFFER_SIZE + 1];
-	ssize_t		read_b;
-	char 		*nl;
-	static char *remainder = NULL;
+	size_t	i;
+	char	*new_rem;
 
-	if (fd < 0 || !line || BUFFER_SIZE < 1)
+	i = 0;
+	while ((*rem_ptr)[i])
+	{
+		if ((*rem_ptr)[i] == '\n')
+		{
+			new_rem = ft_strdup(*rem_ptr + i + 1);
+			(*rem_ptr)[i] = '\0';
+			*line = ft_strdup(*rem_ptr);
+			free(*rem_ptr);
+			*rem_ptr = NULL;
+			if (!new_rem || !(*line))
+				return (free_mem(&new_rem, line));
+			*rem_ptr = new_rem;
+			return (print_line(line, line, NULL));
+		}
+		i++;
+	}
+	return (0);
+}
+
+static ssize_t	read_buf(int fd, char **buf_ptr, size_t size, char **rem_ptr)
+{
+	ssize_t	read_b;
+
+	read_b = read(fd, *buf_ptr, size);
+	if (read_b <= 0)
+		return ((int)read_b);
+	if (!(*rem_ptr = strjoinfree(*rem_ptr, *buf_ptr, read_b)))
 		return (-1);
-	ft_memset(buf,'\0', BUFFER_SIZE + 1);
+	return (read_b);
+}
+
+int				get_next_line(int fd, char **line)
+{
+	static char	*remainder = NULL;
+	char		*buf;
+	ssize_t		read_b;
+	int			flag;
+
+	buf = NULL;
+	if (fd < 0 || !line || BUFFER_SIZE < 1)
+		return (free_mem(&remainder, &buf));
 	while (1)
 	{
-		if ((nl = ft_strchr(remainder, '\n')))
+		if (remainder)
 		{
-			free(*line);
-			if (!(*line = ft_strdup(remainder)))
-				return (-1);
-			remainder = nl + 1;
-			*nl = '\0';
-			ft_putendl(*line);
-			return (1);
+			if ((flag = nl_search(&remainder, line)))
+				return (flag);
 		}
-		if ((read_b = read(fd, buf, BUFFER_SIZE)) < 0)
-			return (-1);
-		if (!remainder)
-		{
-			if (!(*line = ft_strdup(buf)))
-				return (-1);
-			remainder = *line;
-		}
-		if (!read_b)
-		{
-			ft_putendl(*line);
-			remainder = NULL;
-			return (0);
-		}
-		free(*line);
-		if (!(*line = ft_strjoin(remainder, buf)))
-			return (-1);
+		if (!(buf = (char*)malloc(sizeof(char) * (BUFFER_SIZE + 1))))
+			return (free_mem(&remainder, &buf));
+		buf[BUFFER_SIZE] = '\0';
+		if (!(read_b = read_buf(fd, &buf, BUFFER_SIZE, &remainder)))
+			return (print_line(&remainder, line, &buf));
+		if (read_b < 0)
+			return (free_mem(&remainder, &buf));
 	}
-}
-
-int main(void)
-{
-	int get;
-	char **line;
-	int fd = open("test", O_RDWR);
-	while ((get = get_next_line(fd, line)))
-	{
-		printf("%d\n", get);
-	}
-	printf("%d\n", get);
-	free(*line);
-	close(fd);
-	return (0);
-
 }
