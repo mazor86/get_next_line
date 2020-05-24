@@ -6,7 +6,7 @@
 /*   By: mazor <mazor@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/19 03:41:22 by mazor             #+#    #+#             */
-/*   Updated: 2020/05/24 21:10:23 by mazor            ###   ########.fr       */
+/*   Updated: 2020/05/24 22:50:50 by mazor            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,9 @@ char	*strjoinfree(char *s1, char *s2, size_t len2)
 	size_t	len1;
 
 	if (!s1)
-		s1 = ft_strdup("");
+		return (NULL);
+	if (!len2)
+		return (s1);
 	len1 = ft_strlen(s1);
 	if (!(joined = (char*)malloc(sizeof(char) * (len1 + len2 + 1))))
 		return (NULL);

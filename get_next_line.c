@@ -6,7 +6,7 @@
 /*   By: mazor <mazor@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/24 14:18:31 by mazor             #+#    #+#             */
-/*   Updated: 2020/05/24 21:16:01 by mazor            ###   ########.fr       */
+/*   Updated: 2020/05/24 23:17:16 by mazor            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,17 +27,6 @@ static int		free_mem(char **rem_ptr, char **buf_ptr)
 	return (-1);
 }
 
-static int		print_line(char **src, char **dest, char **buf_ptr)
-{
-	if (!(*src))
-		return (free_mem(src, buf_ptr) + 1);
-	write(1, *src, ft_strlen(*src));
-	if (src == dest)
-		return ((int)write(1, "\n", 1));
-	*dest = ft_strdup(*src);
-	return (free_mem(src, buf_ptr) + 1);
-}
-
 static int		nl_search(char **rem_ptr, char **line)
 {
 	size_t	i;
@@ -56,7 +45,7 @@ static int		nl_search(char **rem_ptr, char **line)
 			if (!new_rem || !(*line))
 				return (free_mem(&new_rem, line));
 			*rem_ptr = new_rem;
-			return (print_line(line, line, NULL));
+			return (1);
 		}
 		i++;
 	}
@@ -67,9 +56,11 @@ static ssize_t	read_buf(int fd, char **buf_ptr, size_t size, char **rem_ptr)
 {
 	ssize_t	read_b;
 
+	if (!(*rem_ptr))
+		*rem_ptr = ft_strdup("");
 	read_b = read(fd, *buf_ptr, size);
-	if (read_b <= 0)
-		return ((int)read_b);
+	if (read_b < 0)
+		return (-1);
 	if (!(*rem_ptr = strjoinfree(*rem_ptr, *buf_ptr, read_b)))
 		return (-1);
 	return (read_b);
@@ -92,11 +83,13 @@ int				get_next_line(int fd, char **line)
 			if ((flag = nl_search(&remainder, line)))
 				return (flag);
 		}
-		if (!(buf = (char*)malloc(sizeof(char) * (BUFFER_SIZE + 1))))
+		if (!(buf = (char*)malloc(sizeof(char) * BUFFER_SIZE)))
 			return (free_mem(&remainder, &buf));
-		buf[BUFFER_SIZE] = '\0';
 		if (!(read_b = read_buf(fd, &buf, BUFFER_SIZE, &remainder)))
-			return (print_line(&remainder, line, &buf));
+		{
+			*line = ft_strdup(remainder);
+			return (free_mem(&remainder, &buf) + 1);
+		}
 		if (read_b < 0)
 			return (free_mem(&remainder, &buf));
 	}
