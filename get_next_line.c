@@ -6,7 +6,7 @@
 /*   By: mazor <mazor@student.21-school.ru>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/24 14:18:31 by mazor             #+#    #+#             */
-/*   Updated: 2020/05/24 23:17:16 by mazor            ###   ########.fr       */
+/*   Updated: 2020/05/25 12:00:44 by mazor            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ static ssize_t	read_buf(int fd, char **buf_ptr, size_t size, char **rem_ptr)
 
 int				get_next_line(int fd, char **line)
 {
-	static char	*remainder = NULL;
+	static char	*remainder;
 	char		*buf;
 	ssize_t		read_b;
 	int			flag;
@@ -79,10 +79,8 @@ int				get_next_line(int fd, char **line)
 	while (1)
 	{
 		if (remainder)
-		{
 			if ((flag = nl_search(&remainder, line)))
 				return (flag);
-		}
 		if (!(buf = (char*)malloc(sizeof(char) * BUFFER_SIZE)))
 			return (free_mem(&remainder, &buf));
 		if (!(read_b = read_buf(fd, &buf, BUFFER_SIZE, &remainder)))
